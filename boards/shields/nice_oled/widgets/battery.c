@@ -2,8 +2,6 @@
 #include <fonts.h>
 #include <zephyr/kernel.h>
 
-LV_IMG_DECLARE(bolt);
-
 #if IS_ENABLED(CONFIG_NICE_OLED_WIDGET_ANIMATION_PERIPHERAL_SMART_BATTERY)
 LV_IMG_DECLARE(crystal_01);
 LV_IMG_DECLARE(crystal_02);
@@ -75,9 +73,16 @@ static void draw_level(lv_obj_t *canvas, const struct status_state *state) {
     lv_canvas_draw_text(canvas, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y, 42, &label_right_dsc, text);
 }
 
-static void draw_charging_level(lv_obj_t *canvas, const struct status_state *state) {
-    lv_draw_img_dsc_t img_dsc;
-    lv_draw_img_dsc_init(&img_dsc);
+/*
+ * USB / charging state is NOT a battery level: on Pro Micro nRF52840 boards the
+ * battery is read through the VDDH ADC node, and while USB is connected the
+ * charger holds that rail at its CV voltage (~4.2 V), so the voltage-based
+ * estimate reads ~100% no matter how charged the cell actually is. Instead of
+ * showing that inflated number as if it were the charge level, we show the
+ * honest state "USB". The last battery estimate drawn on battery events stays
+ * in the widget state and is shown again once USB is unplugged.
+ */
+static void draw_usb_level(lv_obj_t *canvas, const struct status_state *state) {
     lv_draw_label_dsc_t label_right_dsc;
 #if IS_ENABLED(CONFIG_NICE_EPAPER_ON)
     init_label_dsc(&label_right_dsc, LVGL_FOREGROUND, &pixel_operator_mono_16, LV_TEXT_ALIGN_RIGHT);
@@ -85,15 +90,9 @@ static void draw_charging_level(lv_obj_t *canvas, const struct status_state *sta
     init_label_dsc(&label_right_dsc, LVGL_FOREGROUND, &pixel_operator_mono_16, LV_TEXT_ALIGN_LEFT);
 #endif // CONFIG_NICE_EPAPER_ON
 
-    char text[10] = {};
-
-    sprintf(text, "%i", state->battery);
-    lv_canvas_draw_text(canvas, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y, 35, &label_right_dsc, text);
-#if IS_ENABLED(CONFIG_NICE_EPAPER_ON)
-    lv_canvas_draw_img(canvas, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X + 36, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y + 2, &bolt, &img_dsc);
-#else
-    lv_canvas_draw_img(canvas, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X + 25, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y, &bolt, &img_dsc);
-#endif // CONFIG_NICE_EPAPER_ON
+    // Not a fuel gauge: this is only honest state reporting.
+    lv_canvas_draw_text(canvas, CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_X,
+                        CONFIG_NICE_OLED_WIDGET_BATTERY_CUSTOM_Y, 42, &label_right_dsc, "USB");
 }
 
 void draw_battery_status(lv_obj_t *canvas, const struct status_state *state) {
@@ -103,7 +102,7 @@ void draw_battery_status(lv_obj_t *canvas, const struct status_state *state) {
     lv_canvas_draw_text(canvas, 0, 19, 25, &label_left_dsc, "BAT");
 #endif // CONFIG_NICE_EPAPER_ON
     if (state->charging) {
-        draw_charging_level(canvas, state);
+        draw_usb_level(canvas, state);
     } else {
         draw_level(canvas, state);
     }
