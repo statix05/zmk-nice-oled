@@ -98,6 +98,19 @@ config NICE_OLED_SHOW_SLEEP_ART_ON_SLEEP
 
 ## ANIMATION ON CENTRAL AND PERIPHERAL END }}}
 ### WIDGET ON PERIPHERAL START {{{
+### UNION_LOGO (STATIX logo on both halves) {{{
+config NICE_OLED_WIDGET_UNION_LOGO
+    bool "Draw the STATIX 'Union' logo on the status screen"
+    default y
+
+config NICE_OLED_WIDGET_UNION_LOGO_X
+    int "Logo X position on the (pre-rotation) canvas, 0..31 minus logo width"
+    default 0
+
+config NICE_OLED_WIDGET_UNION_LOGO_Y
+    int "Logo Y position on the (pre-rotation) canvas"
+    default 48
+
 ### SMART_BATTERY {{{
 config NICE_OLED_WIDGET_ANIMATION_PERIPHERAL_SMART_BATTERY
     bool "Enable animation on peripheral"

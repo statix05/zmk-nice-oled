@@ -859,6 +859,16 @@ static void draw_canvas(lv_obj_t *widget, lv_color_t cbuf[], const struct status
 
     // Draw widgets
     draw_background(canvas);
+#if IS_ENABLED(CONFIG_NICE_OLED_WIDGET_UNION_LOGO)
+    // STATIX logo drawn first (background layer); other widgets draw on top.
+    {
+        LV_IMG_DECLARE(union_logo);
+        lv_draw_img_dsc_t logo_dsc;
+        lv_draw_img_dsc_init(&logo_dsc);
+        lv_canvas_draw_img(canvas, CONFIG_NICE_OLED_WIDGET_UNION_LOGO_X,
+                           CONFIG_NICE_OLED_WIDGET_UNION_LOGO_Y, &union_logo, &logo_dsc);
+    }
+#endif
     draw_output_status(canvas, state);
 #if !IS_ENABLED(CONFIG_NICE_OLED_WIDGET_CENTRAL_SHOW_BATTERY_PERIPHERAL_ALL) &&                    \
     !IS_ENABLED(CONFIG_NICE_OLED_WIDGET_CENTRAL_SHOW_BATTERY_PERIPHERAL_ONLY) &&                   \
